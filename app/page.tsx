@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { OverthinkLevel, PerspectiveMode, GenerateResponse, EndingType } from '@/app/lib/types';
 import TriggerTemplates from '@/app/components/TriggerTemplates';
 import SituationInput from '@/app/components/SituationInput';
@@ -11,7 +11,6 @@ import SanityMeter from '@/app/components/SanityMeter';
 import AlternateEndings from '@/app/components/AlternateEndings';
 import ShareCard from '@/app/components/ShareCard';
 import DarkModeToggle from '@/app/components/DarkModeToggle';
-import Turnstile from '@/app/components/Turnstile';
 
 export default function Home() {
   const [situation, setSituation] = useState('');
@@ -22,15 +21,6 @@ export default function Home() {
   const [isEndingLoading, setIsEndingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAnimationComplete, setIsAnimationComplete] = useState(false);
-  const turnstileTokenRef = useRef<string | null>(null);
-
-  const handleTurnstileVerify = (token: string) => {
-    turnstileTokenRef.current = token;
-  };
-
-  const handleTurnstileExpire = () => {
-    turnstileTokenRef.current = null;
-  };
 
   const handleSubmit = async (inputSituation: string) => {
     setError(null);
@@ -42,12 +32,7 @@ export default function Home() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          situation: inputSituation,
-          level,
-          perspective,
-          turnstileToken: turnstileTokenRef.current,
-        }),
+        body: JSON.stringify({ situation: inputSituation, level, perspective }),
       });
       if (!res.ok) {
         if (res.status === 429 || res.status === 403) {
@@ -73,14 +58,7 @@ export default function Home() {
       const res = await fetch('/api/alternate-ending', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          situation,
-          steps: result.steps,
-          level,
-          perspective,
-          ending_type: endingType,
-          turnstileToken: turnstileTokenRef.current,
-        }),
+        body: JSON.stringify({ situation, steps: result.steps, level, perspective, ending_type: endingType }),
       });
       if (!res.ok) {
         if (res.status === 429 || res.status === 403) {
@@ -127,7 +105,6 @@ export default function Home() {
         {/* Input */}
         <section className="mb-6">
           <SituationInput onSubmit={handleSubmit} isLoading={isLoading} defaultValue={situation} />
-          <Turnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} />
         </section>
 
         {/* Controls */}
@@ -137,6 +114,16 @@ export default function Home() {
         <section className="mb-8">
           <PerspectiveSelector value={perspective} onChange={setPerspective} />
         </section>
+
+        {/* Loading Spinner */}
+        {isLoading && (
+          <div className="mb-8 flex flex-col items-center gap-3 animate-fade-in">
+            <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 animate-pulse">
+              กำลังคิดมาก...
+            </p>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
