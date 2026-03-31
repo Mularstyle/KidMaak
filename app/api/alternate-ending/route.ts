@@ -71,6 +71,14 @@ export async function POST(request: Request) {
       headers: { "X-RateLimit-Remaining": String(limit.remaining) },
     });
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) {
+      console.error("Gemini quota exceeded:", errMsg);
+      return Response.json(
+        { error: "ระบบใช้งานเยอะมาก รอสักครู่แล้วลองใหม่นะ 🧠" },
+        { status: 429 }
+      );
+    }
     console.error("Alternate ending API error:", err);
     return Response.json(
       { error: "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง" },
