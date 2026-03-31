@@ -70,7 +70,8 @@ export async function POST(request: Request) {
     return Response.json(response, {
       headers: { "X-RateLimit-Remaining": String(limit.remaining) },
     });
-  } catch {
+  } catch (err) {
+    console.error("Alternate ending API error:", err);
     return Response.json(
       { error: "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง" },
       { status: 500 }
