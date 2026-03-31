@@ -10,7 +10,6 @@ interface SituationInputProps {
 }
 
 const MAX_LENGTH = 200;
-const WARNING_THRESHOLD = 180;
 
 export default function SituationInput({ onSubmit, isLoading, defaultValue }: SituationInputProps) {
   const [value, setValue] = useState(defaultValue ?? '');
@@ -24,9 +23,9 @@ export default function SituationInput({ onSubmit, isLoading, defaultValue }: Si
   }, [defaultValue]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    if (newValue.length <= MAX_LENGTH) {
-      setValue(newValue);
+    const v = e.target.value;
+    if (v.length <= MAX_LENGTH) {
+      setValue(v);
       if (error) setError(null);
     }
   };
@@ -34,16 +33,11 @@ export default function SituationInput({ onSubmit, isLoading, defaultValue }: Si
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const result = validateSituation(value);
-    if (!result.valid) {
-      setError(result.error ?? null);
-      return;
-    }
+    if (!result.valid) { setError(result.error ?? null); return; }
     onSubmit(value);
   };
 
-  const charCount = value.length;
-  const isNearLimit = charCount >= WARNING_THRESHOLD;
-  const isAtLimit = charCount >= MAX_LENGTH;
+  const count = value.length;
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-2">
@@ -52,34 +46,24 @@ export default function SituationInput({ onSubmit, isLoading, defaultValue }: Si
           value={value}
           onChange={handleChange}
           placeholder="พิมพ์สถานการณ์ที่ทำให้คิดมาก..."
-          rows={3}
+          rows={2}
           maxLength={MAX_LENGTH}
           disabled={isLoading}
-          className="w-full resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full resize-none rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-4 py-3 text-sm font-mono text-[var(--foreground)] placeholder-neutral-400 dark:placeholder-neutral-600 transition-colors focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500/20 disabled:opacity-40"
         />
-        <span
-          className={`absolute bottom-3 right-3 text-xs ${
-            isAtLimit
-              ? 'text-red-500 font-semibold'
-              : isNearLimit
-                ? 'text-red-400'
-                : 'text-gray-400'
-          }`}
-        >
-          {charCount}/{MAX_LENGTH}
+        <span className={`absolute bottom-2.5 right-3 text-[10px] font-mono ${count >= MAX_LENGTH ? 'text-red-500' : 'text-neutral-400 dark:text-neutral-600'}`}>
+          {count}/{MAX_LENGTH}
         </span>
       </div>
 
-      {error && (
-        <p className="text-sm text-red-500">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-xl bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-700 active:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        className="rounded-lg bg-red-500 px-5 py-2.5 text-xs font-mono uppercase tracking-wider text-white transition-colors hover:bg-red-600 active:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {isLoading ? 'กำลังคิด...' : '🧠 เริ่มคิดมาก!'}
+        {isLoading ? 'processing...' : '→ เริ่มคิดมาก'}
       </button>
     </form>
   );

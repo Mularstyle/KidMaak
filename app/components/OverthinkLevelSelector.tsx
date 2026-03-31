@@ -1,40 +1,41 @@
 'use client';
 
-import { OverthinkLevel } from '@/app/lib/types';
+import type { OverthinkLevel } from '@/app/lib/types';
 
 interface OverthinkLevelSelectorProps {
   value: OverthinkLevel;
   onChange: (level: OverthinkLevel) => void;
 }
 
-const LEVELS: { level: OverthinkLevel; label: string }[] = [
-  { level: 1, label: 'Reasonable human' },
-  { level: 2, label: 'Slight worrier' },
-  { level: 3, label: 'Full overthinker' },
-  { level: 4, label: 'Anxiety master' },
-  { level: 5, label: 'Meme/chaos' },
+const LEVELS: { level: OverthinkLevel; label: string; thai: string }[] = [
+  { level: 1, label: 'rational', thai: 'มีเหตุผล' },
+  { level: 2, label: 'worried', thai: 'เริ่มคิดมาก' },
+  { level: 3, label: 'spiral', thai: 'วนลูป' },
+  { level: 4, label: 'crisis', thai: 'วิกฤต' },
+  { level: 5, label: 'chaos', thai: 'บ้าไปแล้ว' },
 ];
 
 export default function OverthinkLevelSelector({ value, onChange }: OverthinkLevelSelectorProps) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">ระดับความคิดมาก</p>
-      <div className="flex flex-wrap gap-2">
-        {LEVELS.map(({ level, label }) => {
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 dark:text-neutral-500">level / ระดับ</p>
+      <div className="flex gap-1.5">
+        {LEVELS.map(({ level, label, thai }) => {
           const isSelected = value === level;
           return (
             <button
               key={level}
               type="button"
               onClick={() => onChange(level)}
-              className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+              className={`flex-1 rounded-md border py-2 text-[11px] font-mono transition-colors ${
                 isSelected
-                  ? 'border-purple-500 bg-purple-600 text-white'
-                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30'
+                  ? 'border-red-500 bg-red-500/10 text-red-500'
+                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-500 hover:border-neutral-400 dark:hover:border-neutral-600'
               }`}
             >
-              <span className="font-medium">Lv.{level}</span>{' '}
-              <span className={isSelected ? 'text-purple-100' : 'text-gray-500 dark:text-gray-400'}>{label}</span>
+              <span className="block font-bold">{level}</span>
+              <span className="block text-[9px] mt-0.5">{label}</span>
+              <span className="block text-[9px]">{thai}</span>
             </button>
           );
         })}

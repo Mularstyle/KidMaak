@@ -8,43 +8,31 @@ interface AlternateEndingsProps {
   visible: boolean;
 }
 
-const ENDING_OPTIONS: { type: EndingType; label: string; emoji: string }[] = [
-  { type: "worst", label: "Worst ending", emoji: "😱" },
-  { type: "best", label: "Best ending", emoji: "🌈" },
-  { type: "delusional", label: "Delusional ending", emoji: "🦄" },
+const OPTIONS: { type: EndingType; label: string }[] = [
+  { type: "worst", label: "worst ending" },
+  { type: "best", label: "best ending" },
+  { type: "delusional", label: "delusional" },
 ];
 
-export default function AlternateEndings({
-  onSelect,
-  isLoading,
-  visible,
-}: AlternateEndingsProps) {
+export default function AlternateEndings({ onSelect, isLoading, visible }: AlternateEndingsProps) {
   if (!visible) return null;
 
   return (
-    <div className="w-full max-w-lg mx-auto mt-4 animate-[fadeIn_0.5s_ease-in-out]">
-      <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-3">
-        🔮 ลองเลือกตอนจบแบบอื่น?
+    <div className="w-full mt-4 animate-fade-in">
+      <p className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 dark:text-neutral-500 text-center mb-2">
+        alternate ending
       </p>
-      <div className="flex flex-col sm:flex-row gap-2">
-        {ENDING_OPTIONS.map(({ type, label, emoji }) => {
-          const isSelected = isLoading;
-          return (
-            <button
-              key={type}
-              onClick={() => onSelect(type)}
-              disabled={isLoading}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-purple-200 dark:border-purple-700 bg-white/80 dark:bg-gray-800/80 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-400 dark:hover:border-purple-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <span className="inline-block w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <span>{emoji}</span>
-              )}
-              <span>{label}</span>
-            </button>
-          );
-        })}
+      <div className="flex gap-1.5">
+        {OPTIONS.map(({ type, label }) => (
+          <button
+            key={type}
+            onClick={() => onSelect(type)}
+            disabled={isLoading}
+            className="flex-1 rounded-md border border-neutral-300 dark:border-neutral-700 py-2 text-[11px] font-mono text-neutral-600 dark:text-neutral-400 transition-colors hover:border-red-400 hover:text-red-500 dark:hover:border-red-500 dark:hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "..." : label}
+          </button>
+        ))}
       </div>
     </div>
   );

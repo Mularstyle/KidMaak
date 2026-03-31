@@ -10,147 +10,159 @@ interface ShareCardProps {
   visible: boolean;
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 80) return "text-green-400";
-  if (score >= 40) return "text-yellow-400";
-  return "text-red-400";
-}
-
 function buildShareText(situation: string, steps: string[], sanityScore: number): string {
-  const lines = [`🧠 ${situation}`];
-  steps.forEach((step, i) => {
-    lines.push(`↓`);
-    lines.push(`Step ${i + 1}: ${step}`);
-  });
-  lines.push(`↓`);
-  lines.push(`Sanity: ${Math.round(sanityScore)}%`);
+  const lines = [`"${situation}"`];
+  steps.forEach((step) => lines.push(`> ${step}`));
+  lines.push(`sanity: ${Math.round(sanityScore)}%`);
   lines.push("");
-  lines.push("— Overthink Simulator 🌀");
+  lines.push("#คิดมาก #KidMaak");
   return lines.join("\n");
 }
 
 export default function ShareCard({ situation, steps, sanityScore, visible }: ShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [copyFallback, setCopyFallback] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!visible) return null;
 
-  const clampedScore = Math.max(0, Math.min(100, Math.round(sanityScore)));
-  const shareText = buildShareText(situation, steps, clampedScore);
+  const clamped = Math.max(0, Math.min(100, Math.round(sanityScore)));
+  const shareText = buildShareText(situation, steps, clamped);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
-    setImageError(null);
+    setError(null);
     setIsDownloading(true);
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2 });
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 3 });
       const link = document.createElement("a");
-      link.download = "overthink-card.png";
+      link.download = "overthink.png";
       link.href = dataUrl;
       link.click();
     } catch {
-      setImageError("ไม่สามารถสร้างภาพได้ ลองใหม่อีกครั้ง");
+      setError("ไม่สามารถสร้างภาพได้ ลองใหม่อีกครั้ง");
     } finally {
       setIsDownloading(false);
     }
   };
 
   const handleCopy = async () => {
-    setImageError(null);
+    setError(null);
     setCopyFallback(null);
     try {
       await navigator.clipboard.writeText(shareText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopyFallback(shareText);
     }
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto mt-6 animate-[fadeIn_0.5s_ease-in-out]">
+    <div className="w-full mt-8 animate-fade-in">
       {/* Action buttons */}
       <div className="flex gap-2 mb-4">
         <button
           onClick={handleDownload}
           disabled={isDownloading}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-2 text-xs font-mono uppercase tracking-wider border border-neutral-300 dark:border-neutral-700 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50"
         >
-          {isDownloading ? (
-            <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <span>📥</span>
-          )}
-          <span>Download image</span>
+          {isDownloading ? "..." : "↓ download"}
         </button>
         <button
           onClick={handleCopy}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-purple-200 dark:border-purple-700 bg-white/80 dark:bg-gray-800/80 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200"
+          className="flex-1 py-2 text-xs font-mono uppercase tracking-wider border border-neutral-300 dark:border-neutral-700 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
-          <span>📋</span>
-          <span>Copy for social</span>
+          {copied ? "✓ copied" : "⎘ copy text"}
         </button>
       </div>
 
-      {/* Inline error for image generation */}
-      {imageError && (
-        <p className="text-sm text-red-500 text-center mb-3">{imageError}</p>
-      )}
+      {error && <p className="text-xs text-red-500 text-center mb-3">{error}</p>}
 
-      {/* Fallback text for clipboard fail */}
       {copyFallback && (
-        <div className="mb-4 p-3 rounded-xl border border-yellow-300 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20">
-          <p className="text-xs text-yellow-700 dark:text-yellow-400 mb-2">
-            ไม่สามารถคัดลอกอัตโนมัติได้ กรุณาคัดลอกข้อความด้านล่าง:
-          </p>
+        <div className="mb-4 p-3 border border-neutral-300 dark:border-neutral-700 rounded-lg">
+          <p className="text-xs text-neutral-500 mb-2">คัดลอกข้อความด้านล่าง:</p>
           <textarea
-            readOnly
-            value={copyFallback}
-            rows={6}
-            className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 resize-none"
+            readOnly value={copyFallback} rows={6}
+            className="w-full text-xs bg-transparent border border-neutral-200 dark:border-neutral-800 rounded p-2 resize-none font-mono"
             onFocus={(e) => e.target.select()}
           />
         </div>
       )}
 
-      {/* Card preview (captured by html-to-image) */}
+      {/* Share Card — captured by html-to-image */}
       <div
         ref={cardRef}
-        className="rounded-2xl overflow-hidden shadow-lg"
+        className="rounded-xl overflow-hidden"
+        style={{ backgroundColor: "#0a0a0a" }}
       >
-        <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-pink-500 p-5">
-          {/* Header */}
-          <div className="text-center mb-4">
-            <p className="text-white/70 text-xs font-medium tracking-wider uppercase">
-              Overthink Simulator 🌀
-            </p>
-          </div>
+        <div className="px-6 py-8 sm:px-8 sm:py-10" style={{ maxWidth: 480, margin: "0 auto" }}>
+          {/* Title */}
+          <p
+            className="text-center mb-6 uppercase tracking-[0.25em]"
+            style={{ fontSize: 10, color: "#ef4444", fontFamily: "monospace" }}
+          >
+            คิดมาก KidMaak
+          </p>
 
           {/* Situation */}
-          <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 mb-3">
-            <p className="text-white text-sm font-medium">🧠 {situation}</p>
-          </div>
+          <p
+            className="text-center mb-6"
+            style={{ fontSize: 16, color: "#ffffff", fontFamily: "monospace", lineHeight: 1.6 }}
+          >
+            &ldquo;{situation}&rdquo;
+          </p>
+
+          {/* Divider */}
+          <div className="mb-5" style={{ borderTop: "1px solid #262626" }} />
 
           {/* Steps */}
-          {steps.map((step, i) => (
-            <div key={i} className="flex flex-col items-center">
-              <div className="text-white/50 text-lg py-0.5 select-none">↓</div>
-              <div className="w-full bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2.5">
-                <p className="text-white text-xs">
-                  <span className="text-white/70 font-semibold">Step {i + 1}:</span>{" "}
-                  {step}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {/* Sanity Score */}
-          <div className="text-white/50 text-lg text-center py-0.5 select-none">↓</div>
-          <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-            <p className={`text-lg font-bold ${getScoreColor(clampedScore)}`}>
-              Sanity: {clampedScore}%
-            </p>
+          <div className="space-y-2 mb-6">
+            {steps.map((step, i) => (
+              <p
+                key={i}
+                style={{ fontSize: 13, color: "#a3a3a3", fontFamily: "monospace", lineHeight: 1.5 }}
+              >
+                <span style={{ color: "#ef4444", marginRight: 6 }}>&gt;</span>
+                {step}
+              </p>
+            ))}
           </div>
+
+          {/* Divider */}
+          <div className="mb-5" style={{ borderTop: "1px solid #262626" }} />
+
+          {/* Sanity */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-1.5">
+              <span style={{ fontSize: 10, color: "#525252", fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                sanity
+              </span>
+              <span style={{ fontSize: 13, color: clamped < 30 ? "#ef4444" : "#a3a3a3", fontFamily: "monospace", fontWeight: "bold" }}>
+                {clamped}%
+              </span>
+            </div>
+            <div style={{ width: "100%", height: 4, backgroundColor: "#1a1a1a", borderRadius: 2 }}>
+              <div
+                style={{
+                  width: `${clamped}%`,
+                  height: "100%",
+                  backgroundColor: clamped < 30 ? "#ef4444" : clamped < 60 ? "#f87171" : "#525252",
+                  borderRadius: 2,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <p
+            className="text-center"
+            style={{ fontSize: 10, color: "#404040", fontFamily: "monospace" }}
+          >
+            #คิดมาก
+          </p>
         </div>
       </div>
     </div>
