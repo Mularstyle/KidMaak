@@ -2,6 +2,7 @@ import { alternateEndingRequestSchema, sanitizeInput } from "@/app/lib/validator
 import { getLLMService } from "@/app/lib/llm-service";
 import { checkRateLimit, DEFAULT_RATE_LIMIT } from "@/app/lib/rate-limit";
 import { verifyTurnstileToken } from "@/app/lib/turnstile";
+import { trackUsage } from "@/app/lib/usage-tracker";
 
 export async function POST(request: Request) {
   try {
@@ -67,6 +68,14 @@ export async function POST(request: Request) {
     const response = await llmService.generateAlternateEnding({
       ...result.data,
       situation: sanitizedSituation.sanitized,
+    });
+
+    // Track usage
+    trackUsage({
+      type: "alternate-ending",
+      level: result.data.level,
+      perspective: result.data.perspective,
+      situation: sanitizedSituation.sanitized.slice(0, 50),
     });
 
     return Response.json(response, {
