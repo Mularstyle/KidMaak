@@ -2,7 +2,6 @@ import { generateRequestSchema } from "@/app/lib/validators";
 import { sanitizeInput } from "@/app/lib/validators";
 import { getLLMService } from "@/app/lib/llm-service";
 import { checkRateLimit, DEFAULT_RATE_LIMIT } from "@/app/lib/rate-limit";
-import { verifyTurnstileToken } from "@/app/lib/turnstile";
 import { trackUsage } from "@/app/lib/usage-tracker";
 
 export async function POST(request: Request) {
@@ -27,16 +26,6 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-
-    // Verify Turnstile token
-    const turnstileToken = body.turnstileToken;
-    const turnstileResult = await verifyTurnstileToken(turnstileToken, ip);
-    if (!turnstileResult.valid) {
-      return Response.json(
-        { error: "ยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่" },
-        { status: 403 }
-      );
-    }
 
     const result = generateRequestSchema.safeParse(body);
     if (!result.success) {
