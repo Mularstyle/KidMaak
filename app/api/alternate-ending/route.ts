@@ -1,4 +1,4 @@
-import { alternateEndingRequestSchema } from "@/app/lib/validators";
+import { alternateEndingRequestSchema, sanitizeInput } from "@/app/lib/validators";
 import { getLLMService } from "@/app/lib/llm-service";
 import { checkRateLimit, DEFAULT_RATE_LIMIT } from "@/app/lib/rate-limit";
 import { verifyTurnstileToken } from "@/app/lib/turnstile";
@@ -44,8 +44,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize situation and steps against prompt injection
+    const sanitizedSituation = sanitizeInput(result.data.situation);
+    if (!sanitizedSituation.safe) {
+      return Response.json(
+        { error: sanitizedSituation.reason || "ข้อความไม่ถูกต้อง" },
+        { status: 400 }
+      );
+    }
+
+    for (const step of result.data.steps) {
+      const sanitizedStep = sanitizeInput(step);
+      if (!sanitizedStep.safe) {
+        return Response.json(
+          { error: "ข้อความมีรูปแบบที่ไม่อนุญาต" },
+          { status: 400 }
+        );
+      }
+    }
+
     const llmService = getLLMService();
-    const response = await llmService.generateAlternateEnding(result.data);
+    const response = await llmService.generateAlternateEnding({
+      ...result.data,
+      situation: sanitizedSituation.sanitized,
+    });
 
     return Response.json(response, {
       headers: { "X-RateLimit-Remaining": String(limit.remaining) },

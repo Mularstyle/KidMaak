@@ -1,4 +1,5 @@
 import { generateRequestSchema } from "@/app/lib/validators";
+import { sanitizeInput } from "@/app/lib/validators";
 import { getLLMService } from "@/app/lib/llm-service";
 import { checkRateLimit, DEFAULT_RATE_LIMIT } from "@/app/lib/rate-limit";
 import { verifyTurnstileToken } from "@/app/lib/turnstile";
@@ -44,8 +45,20 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize user input against prompt injection
+    const sanitized = sanitizeInput(result.data.situation);
+    if (!sanitized.safe) {
+      return Response.json(
+        { error: sanitized.reason || "ข้อความไม่ถูกต้อง" },
+        { status: 400 }
+      );
+    }
+
     const llmService = getLLMService();
-    const response = await llmService.generateThoughtChain(result.data);
+    const response = await llmService.generateThoughtChain({
+      ...result.data,
+      situation: sanitized.sanitized,
+    });
 
     return Response.json(response, {
       headers: { "X-RateLimit-Remaining": String(limit.remaining) },
