@@ -10,10 +10,10 @@
 
 ```env
 GOOGLE_GENAI_USE_VERTEXAI=true
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_API_KEY=AQ.Ab8RN6LNRdsO_VXXXXXXXXXXXXXXXXXX
 ```
+
+**สำคัญ:** ไม่ต้องใส่ `GOOGLE_CLOUD_PROJECT` และ `GOOGLE_CLOUD_LOCATION` เพราะ API Key มีข้อมูลนี้อยู่แล้ว
 
 2. รัน:
 
@@ -33,27 +33,10 @@ npm run dev
 
 ```
 GOOGLE_GENAI_USE_VERTEXAI=true
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_API_KEY=AQ.Ab8RN6LNRdsO_VXXXXXXXXXXXXXXXXXX
 ```
 
 Deploy ได้เลย! ไม่ต้อง Service Account JSON
-
----
-
-## หา Project ID
-
-ถ้าไม่รู้ว่า Project ID คืออะไร:
-
-1. ไปที่ https://console.cloud.google.com/
-2. คลิกที่ชื่อ project ด้านบนซ้าย
-3. จะเห็น Project ID ในตาราง
-
-หรือรันคำสั่ง:
-```bash
-gcloud config get-value project
-```
 
 ---
 
@@ -62,7 +45,7 @@ gcloud config get-value project
 | API Key Type | Format | ใช้กับ | Setup |
 |-------------|--------|--------|-------|
 | Google AI Studio | `AIza...` | Google AI Studio | ง่ายที่สุด - ไม่ต้อง project |
-| Google Cloud | `AQ....` | Vertex AI / Agent Platform | ง่าย - ต้องมี project |
+| Google Cloud | `AQ....` | Vertex AI / Agent Platform | ง่าย - ไม่ต้อง project/location |
 | Service Account | JSON file | Vertex AI | ยาก - ต้อง gcloud + JSON |
 
 **คำแนะนำ:**
@@ -74,17 +57,18 @@ gcloud config get-value project
 
 ## Troubleshooting
 
-### Error: "Project not found"
-- ตรวจสอบว่า `GOOGLE_CLOUD_PROJECT` ถูกต้อง
-- ตรวจสอบว่า project มี billing enabled
-
-### Error: "API not enabled"
-- Enable Vertex AI API: https://console.cloud.google.com/apis/library/aiplatform.googleapis.com
+### Error: "Project/location and API key are mutually exclusive"
+- ลบ `GOOGLE_CLOUD_PROJECT` และ `GOOGLE_CLOUD_LOCATION` ออก
+- ใช้แค่ `GOOGLE_API_KEY` อย่างเดียว
 
 ### Error: "Invalid API key"
 - ตรวจสอบว่า API Key ไม่หมดอายุ
 - ตรวจสอบว่า API Key มีสิทธิ์เข้าถึง Vertex AI
 
+### Error: "API not enabled"
+- Enable Vertex AI API: https://console.cloud.google.com/apis/library/aiplatform.googleapis.com
+
 ### ใช้งานได้แต่ช้า
-- ลอง location อื่น: `us-central1`, `asia-southeast1`
+- API Key จะใช้ region ที่ตั้งไว้ใน key แล้ว
 - ตรวจสอบ quota: https://console.cloud.google.com/iam-admin/quotas
+

@@ -116,47 +116,50 @@ class GeminiLLMService implements LLMService {
   constructor() {
     // Check if using Vertex AI
     const useVertexAI = process.env.GOOGLE_GENAI_USE_VERTEXAI === "true";
+    const googleCloudApiKey = process.env.GOOGLE_API_KEY; // Google Cloud API Key (starts with AQ.)
     
     if (useVertexAI) {
-      const project = process.env.GOOGLE_CLOUD_PROJECT;
-      const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-      const apiKey = process.env.GOOGLE_API_KEY; // Google Cloud API Key (starts with AQ.)
-      
-      if (!project) {
-        throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required for Vertex AI");
-      }
-      
-      // Support multiple authentication methods for Vertex AI:
-      // 1. Google Cloud API Key (AQ.xxx) - easiest for testing
-      // 2. Service Account JSON - for production deployment
-      // 3. Application Default Credentials - for local development
-      
-      let credentials;
-      if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-        try {
-          credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-        } catch (e) {
-          throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format");
+      // Google Cloud API Key (AQ.xxx) - simplest for Vertex AI
+      if (googleCloudApiKey) {
+        // API Key already contains project/location info, don't specify them
+        this.client = new GoogleGenAI({
+          apiKey: googleCloudApiKey,
+        });
+      } else {
+        // Use Service Account or Application Default Credentials
+        const project = process.env.GOOGLE_CLOUD_PROJECT;
+        const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+        
+        if (!project) {
+          throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required for Vertex AI without API key");
         }
-      } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
-        try {
-          const decoded = Buffer.from(
-            process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64,
-            'base64'
-          ).toString('utf-8');
-          credentials = JSON.parse(decoded);
-        } catch (e) {
-          throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_BASE64 format");
+        
+        let credentials;
+        if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+          try {
+            credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+          } catch (e) {
+            throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format");
+          }
+        } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
+          try {
+            const decoded = Buffer.from(
+              process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64,
+              'base64'
+            ).toString('utf-8');
+            credentials = JSON.parse(decoded);
+          } catch (e) {
+            throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_BASE64 format");
+          }
         }
+        
+        this.client = new GoogleGenAI({
+          vertexai: true,
+          project,
+          location,
+          ...(credentials && { credentials }),
+        });
       }
-      
-      this.client = new GoogleGenAI({
-        vertexai: true,
-        project,
-        location,
-        ...(apiKey && { apiKey }), // Use Google Cloud API Key if provided
-        ...(credentials && { credentials }), // Or use Service Account credentials
-      });
     } else {
       // Use Google AI Studio API Key (AIzaxxx)
       const apiKey = process.env.GEMINI_API_KEY;
