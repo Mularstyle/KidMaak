@@ -125,10 +125,32 @@ class GeminiLLMService implements LLMService {
         throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required for Vertex AI");
       }
       
+      // Support Service Account JSON for Vercel deployment
+      let credentials;
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        try {
+          credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+        } catch (e) {
+          throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format");
+        }
+      } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
+        try {
+          const decoded = Buffer.from(
+            process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64,
+            'base64'
+          ).toString('utf-8');
+          credentials = JSON.parse(decoded);
+        } catch (e) {
+          throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_BASE64 format");
+        }
+      }
+      // If no credentials provided, will use Application Default Credentials (local dev)
+      
       this.client = new GoogleGenAI({
         vertexai: true,
         project,
         location,
+        ...(credentials && { credentials }),
       });
     } else {
       // Fallback to API Key (Google AI Studio)

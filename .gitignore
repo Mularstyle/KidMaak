@@ -44,3 +44,8 @@ next-env.d.ts
 .kiro/
 CLAUDE.md
 AGENTS.md
+
+# Google Cloud credentials (ห้ามเก็บใน git!)
+key.json
+*.base64.txt
+*-credentials.json
