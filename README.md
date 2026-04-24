@@ -11,48 +11,29 @@ npm run dev
 
 เปิด [http://localhost:3000](http://localhost:3000)
 
-## Setup Gemini API
+## Setup Gemini API (เลือก 1 ใน 3)
 
-เลือก 1 ใน 2 วิธี:
+### 1. Google AI Studio (ง่ายที่สุด)
+```env
+GEMINI_API_KEY=AIza...
+```
+[ขอ API Key](https://aistudio.google.com/apikey)
 
-### Option 1: Google AI Studio (แนะนำ - ง่ายที่สุด)
+### 2. Vertex AI with API Key (มี AQ. key แล้ว)
+```env
+GOOGLE_GENAI_USE_VERTEXAI=true
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_API_KEY=AQ.xxx...
+```
+ดูรายละเอียด: [QUICK_START.md](QUICK_START.md)
 
-1. ขอ API Key ที่ [Google AI Studio](https://aistudio.google.com/apikey)
-2. ตั้งค่าใน `.env.local`:
-   ```env
-   GEMINI_API_KEY=your-api-key
-   ```
+### 3. Vertex AI with Service Account (Enterprise)
+ดูรายละเอียด: [VERTEX_AI_SETUP.md](VERTEX_AI_SETUP.md)
 
-### Option 2: Vertex AI (สำหรับ enterprise)
-
-**Local Development:**
-1. สร้าง [Google Cloud Project](https://console.cloud.google.com/)
-2. Enable [Vertex AI API](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com)
-3. Setup authentication:
-   ```bash
-   gcloud auth application-default login
-   ```
-4. ตั้งค่าใน `.env.local`:
-   ```env
-   GOOGLE_GENAI_USE_VERTEXAI=true
-   GOOGLE_CLOUD_PROJECT=your-project-id
-   GOOGLE_CLOUD_LOCATION=us-central1
-   ```
-
-**Deploy บน Vercel:**
-1. สร้าง Service Account ใน [Google Cloud Console](https://console.cloud.google.com/iam-admin/serviceaccounts)
-2. ให้ role: `Vertex AI User`
-3. สร้าง JSON key และ download
-4. ตั้งค่า Environment Variables ใน Vercel:
-   - `GOOGLE_GENAI_USE_VERTEXAI=true`
-   - `GOOGLE_CLOUD_PROJECT=your-project-id`
-   - `GOOGLE_CLOUD_LOCATION=us-central1`
-   - `GOOGLE_APPLICATION_CREDENTIALS_JSON` (paste เนื้อหา JSON ทั้งหมด)
-
-## ฟีเจอร์หลัก
+## ฟีเจอร์
 
 - 🧠 สร้างลูกโซ่ความคิดที่คิดมากเกินไป
-- 🎭 เลือกมุมมองต่างๆ (Pessimist, Realist, Optimist)
+- 🎭 เลือกมุมมอง (Pessimist, Realist, Optimist)
 - 📊 Sanity Meter วัดระดับความคิดมาก
 - 🔄 สร้างตอนจบทางเลือก
 - 📤 แชร์เป็นรูปภาพ

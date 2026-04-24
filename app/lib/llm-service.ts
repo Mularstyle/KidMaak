@@ -107,25 +107,30 @@ const SYSTEM_INSTRUCTION = `คุณคือ "คิดมาก KidMaak" — 
 - Output ต้องเป็น JSON ตาม schema ที่กำหนดเท่านั้น ห้ามตอบนอกรูปแบบ`;
 
 /**
- * Real LLM Service - uses Google Gemini via Vertex AI
+ * Real LLM Service - uses Google Gemini via Vertex AI or Google AI Studio
  */
 class GeminiLLMService implements LLMService {
   private client: GoogleGenAI;
   private model: string;
 
   constructor() {
-    // Check if using Vertex AI (recommended for production)
+    // Check if using Vertex AI
     const useVertexAI = process.env.GOOGLE_GENAI_USE_VERTEXAI === "true";
     
     if (useVertexAI) {
       const project = process.env.GOOGLE_CLOUD_PROJECT;
       const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+      const apiKey = process.env.GOOGLE_API_KEY; // Google Cloud API Key (starts with AQ.)
       
       if (!project) {
         throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required for Vertex AI");
       }
       
-      // Support Service Account JSON for Vercel deployment
+      // Support multiple authentication methods for Vertex AI:
+      // 1. Google Cloud API Key (AQ.xxx) - easiest for testing
+      // 2. Service Account JSON - for production deployment
+      // 3. Application Default Credentials - for local development
+      
       let credentials;
       if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
         try {
@@ -144,16 +149,16 @@ class GeminiLLMService implements LLMService {
           throw new Error("Invalid GOOGLE_APPLICATION_CREDENTIALS_BASE64 format");
         }
       }
-      // If no credentials provided, will use Application Default Credentials (local dev)
       
       this.client = new GoogleGenAI({
         vertexai: true,
         project,
         location,
-        ...(credentials && { credentials }),
+        ...(apiKey && { apiKey }), // Use Google Cloud API Key if provided
+        ...(credentials && { credentials }), // Or use Service Account credentials
       });
     } else {
-      // Fallback to API Key (Google AI Studio)
+      // Use Google AI Studio API Key (AIzaxxx)
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         throw new Error("GEMINI_API_KEY environment variable is required");
