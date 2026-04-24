@@ -107,18 +107,38 @@ const SYSTEM_INSTRUCTION = `คุณคือ "คิดมาก KidMaak" — 
 - Output ต้องเป็น JSON ตาม schema ที่กำหนดเท่านั้น ห้ามตอบนอกรูปแบบ`;
 
 /**
- * Real LLM Service - uses Google Gemini Flash
+ * Real LLM Service - uses Google Gemini via Vertex AI
  */
 class GeminiLLMService implements LLMService {
   private client: GoogleGenAI;
   private model: string;
 
   constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is required");
+    // Check if using Vertex AI (recommended for production)
+    const useVertexAI = process.env.GOOGLE_GENAI_USE_VERTEXAI === "true";
+    
+    if (useVertexAI) {
+      const project = process.env.GOOGLE_CLOUD_PROJECT;
+      const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+      
+      if (!project) {
+        throw new Error("GOOGLE_CLOUD_PROJECT environment variable is required for Vertex AI");
+      }
+      
+      this.client = new GoogleGenAI({
+        vertexai: true,
+        project,
+        location,
+      });
+    } else {
+      // Fallback to API Key (Google AI Studio)
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY environment variable is required");
+      }
+      this.client = new GoogleGenAI({ apiKey });
     }
-    this.client = new GoogleGenAI({ apiKey });
+    
     this.model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   }
 
@@ -225,10 +245,12 @@ ${params.steps.map((s, i) => `Step ${i + 1}: ${s}`).join("\n")}
 
 /**
  * Factory function - switches between mock/real via USE_MOCK_LLM env variable.
- * Defaults to mock when GEMINI_API_KEY is not set.
+ * Defaults to mock when neither Vertex AI nor API Key is configured.
  */
 export function getLLMService(): LLMService {
-  const useMock = process.env.USE_MOCK_LLM === "true" || !process.env.GEMINI_API_KEY;
+  const useVertexAI = process.env.GOOGLE_GENAI_USE_VERTEXAI === "true";
+  const hasApiKey = !!process.env.GEMINI_API_KEY;
+  const useMock = process.env.USE_MOCK_LLM === "true" || (!useVertexAI && !hasApiKey);
 
   if (useMock) {
     return new MockLLMService();
